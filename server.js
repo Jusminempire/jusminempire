@@ -20,8 +20,7 @@ app.set("trust proxy", 1);
 const userAccess = require("./Route/userAuthRoute");
 const transaction = require("./Route/transactionRoute");
 const cartItems = require("./Route/cartRoute");
-const vistorsMsg = require("./Route/ajisRoute");
-app.use("/ajis/meaasge", vistorsMsg);
+
 app.use("/api/v1/userverification", userAccess);
 app.use("/api/v1/transaction", transaction);
 app.use("/api/v1/cart", cartItems);
