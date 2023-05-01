@@ -36,4 +36,3 @@ const connectAdminToDataBase = async () => {
   }
 };
 connectAdminToDataBase();
-//
