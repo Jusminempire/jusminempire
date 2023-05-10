@@ -28,8 +28,8 @@ const connectDB = require("./Database/adminDB.js");
 const connectAdminToDataBase = async () => {
   try {
     await connectDB(process.env.MONGODB_URL);
-    app.listen(process.env.PORT || 8000, () => {
-      console.log("app is listening on port 8000");
+    app.listen(process.env.PORT || 2222, () => {
+      console.log("app is listening on port 2222");
     });
   } catch (error) {
     console.log(error);
