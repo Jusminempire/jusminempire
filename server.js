@@ -11,7 +11,7 @@ app.use(bodyParser.urlencoded({ limit: "500000000mb", extended: true }));
 // middleware
 // app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(cors({ origin: "https://elegantcollection.vercel.app" }));
+app.use(cors({ origin: "http://localhost:3000" }));
 app.use(helmet());
 app.set("trust proxy", 1);
 // app.use(rateLimiter({ windowMs: 15 * 60 * 1000, max: 100 }));
