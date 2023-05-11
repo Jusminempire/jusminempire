@@ -14,6 +14,8 @@ app.use(express.json());
 app.use(cors({ origin: "http://localhost:3000" }));
 app.use(helmet());
 app.set("trust proxy", 1);
+app.use(express.static("public"));
+
 // app.use(rateLimiter({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 // routes
