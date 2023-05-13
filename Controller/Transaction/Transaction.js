@@ -3,43 +3,49 @@ const userSchema = require("../../Schema/userSchema.js");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 
-// POST TRANSACTION
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const postTransaction = async (req, res) => {
   try {
-    //
-    const { deliveryaddress, product, anyinfo, deliveryfee, homedelivery } =
-      req.body;
+    const {
+      deliveryaddress,
+      product,
+      anyinfo,
+      deliveryfee,
+      homedelivery,
+      paymentMethod,
+    } = req.body;
 
-    // check if the user has a successful token login
+    // Check if the user has a successful token login
     const auth = req.headers.authorization;
     if (!auth || !auth.startsWith("Bearer ")) {
       return res.status(401).json({
         status: "FAILED",
-        message: "No token provided, You dont have access to this data",
+        message: "No token provided. You don't have access to this data.",
       });
     }
 
-    // split token from bearer and get real value to verify
+    // Split token from bearer and get real value to verify
     const token = auth.split(" ")[1];
     const verifyToken = jwt.verify(token, process.env.SECRET);
 
     if (!verifyToken) {
       return res
         .status(401)
-        .json({ status: "ERROR", message: "Invalide token access" });
+        .json({ status: "ERROR", message: "Invalid token access." });
     }
 
     const user = await userSchema.findById(verifyToken.id);
-
     if (!user) {
-      res.status(401).json({ msg: "user not found" });
+      return res.status(401).json({ msg: "User not found." });
     }
+
     const deliverycharges = deliveryfee + homedelivery;
     const products = [];
     let totalAmount = deliverycharges;
 
     for (const p of product) {
-      const total = p.productprice * p.quantity; // calculate the total cost
+      const total = p.productprice * p.quantity;
       const newProduct = {
         productname: p.productname,
         productprice: p.productprice,
@@ -49,7 +55,7 @@ const postTransaction = async (req, res) => {
         total: total,
       };
       products.push(newProduct);
-      totalAmount += total; // add the total cost to the totalAmount variable
+      totalAmount += total;
     }
 
     const productsWithTotal = products.map((p) => ({
@@ -61,43 +67,24 @@ const postTransaction = async (req, res) => {
       total: p.total,
     }));
 
-    // make a request to Paystack to initialize the transaction
-    const headers = {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-      "Content-Type": "application/json",
-    };
-
-    const data = {
-      email: user.useremail,
-      amount: totalAmount * 100, // Paystack amount is in kobo (i.e. 100 kobo = 1 Naira)
+    // Create a PaymentIntent with Stripe
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: totalAmount * 100, // Stripe amount is in the smallest currency unit (e.g., cents)
+      currency: "usd", // Set the currency to USD or any other supported currency
+      payment_method: paymentMethod.id,
+      confirm: true,
       metadata: {
         delivery_address: deliveryaddress,
-        products: productsWithTotal,
+        products: JSON.stringify(productsWithTotal),
       },
-    };
-
-    const paystackRes = await axios.post(
-      "https://api.paystack.co/transaction/initialize",
-      data,
-      { headers }
-    );
-
-    if (paystackRes.data.status !== true) {
-      return res.status(400).json({
-        status: "FAILED",
-        message: "Failed to initialize transaction",
-      });
-    }
-
+    });
+    console.log(paymentIntent);
     const Transaction = new transactionSchema({
       deliveryaddress: deliveryaddress,
       product: productsWithTotal,
       totalAmount: totalAmount,
-      paystackRef: paystackRes.data.data.reference,
-      authorization_url: paystackRes.data.data.authorization_url,
-      anyinfo: anyinfo,
-      deliveryfee,
-      homedelivery,
+      stripePaymentIntentId: paymentIntent.id,
+      // Add other transaction properties
     });
 
     user.transaction.unshift(Transaction);
@@ -109,13 +96,15 @@ const postTransaction = async (req, res) => {
       status: "SUCCESS",
       data: {
         Transaction,
-        authorization_url: paystackRes.data.data.authorization_url,
-        reference: paystackRes.data.data.reference,
+        clientSecret: paymentIntent.client_secret, // Pass the client secret to the frontend
       },
     });
   } catch (error) {
-    throw new Error(error);
     console.log(error);
+    res.status(500).json({
+      status: "FAILED",
+      message: "An error occurred during the transaction.",
+    });
   }
 };
 

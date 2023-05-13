@@ -16,7 +16,7 @@ app.use(helmet());
 app.set("trust proxy", 1);
 app.use(express.static("public"));
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Origin", "*");
   next();
 });
 // app.use(rateLimiter({ windowMs: 15 * 60 * 1000, max: 100 }));
