@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
+const YOUR_DOMAIN = "http://localhost:3000";
 const postTransaction = async (req, res) => {
   try {
     const {
@@ -67,23 +67,50 @@ const postTransaction = async (req, res) => {
       total: p.total,
     }));
 
-    // Create a PaymentIntent with Stripe
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalAmount * 100, // Stripe amount is in the smallest currency unit (e.g., cents)
-      currency: "usd", // Set the currency to USD or any other supported currency
-      payment_method: paymentMethod.id,
-      confirm: true,
-      metadata: {
-        delivery_address: deliveryaddress,
-        products: JSON.stringify(productsWithTotal),
+    const lineItems = [
+      ...products.map((p) => ({
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: p.productname,
+          },
+          unit_amount: p.productprice * 100, // Convert to smallest currency unit (e.g., cents)
+          tax_behavior: "exclusive", // Set the appropriate tax behavior here
+        },
+        quantity: p.quantity,
+      })),
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Delivery Charges",
+          },
+          unit_amount: deliverycharges * 100, // Convert to cents
+          tax_behavior: "exclusive", // Set the appropriate tax behavior here
+        },
+        quantity: 1,
       },
+    ];
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: `${YOUR_DOMAIN}/orders`,
+      cancel_url: `${YOUR_DOMAIN}`,
+      automatic_tax: { enabled: true },
     });
-    console.log(paymentIntent);
+   
+  
+
     const Transaction = new transactionSchema({
       deliveryaddress: deliveryaddress,
       product: productsWithTotal,
       totalAmount: totalAmount,
-      stripePaymentIntentId: paymentIntent.id,
+      anyinfo: anyinfo,
+      deliveryfee,
+      homedelivery,
+
       // Add other transaction properties
     });
 
@@ -96,14 +123,54 @@ const postTransaction = async (req, res) => {
       status: "SUCCESS",
       data: {
         Transaction,
-        clientSecret: paymentIntent.client_secret, // Pass the client secret to the frontend
+        clientSecret: session.client_secret, // Use session.client_secret instead of paymentIntent.client_secret
+        url: session.url,
       },
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).json({
       status: "FAILED",
       message: "An error occurred during the transaction.",
+      error: error.message, // Include the error message for debugging purposes
+    });
+  }
+};
+// transaction status
+const getTransactionStatus = async (req, res) => {
+  try {
+    const { transactionId } = req.params; // Assuming you have the transaction ID
+
+    // Retrieve the transaction from your database based on the transaction ID
+    const transaction = await transactionSchema.findById(transactionId);
+
+    if (!transaction) {
+      return res.status(404).json({
+        status: "FAILED",
+        message: "Transaction not found.",
+      });
+    }
+
+    // Get the Stripe payment intent ID from the transaction object
+    const paymentIntentId = transaction.paymentIntentId;
+
+    // Retrieve the payment intent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    // Get the status from the payment intent
+    const status = paymentIntent.status;
+
+    res.status(200).json({
+      status: "SUCCESS",
+      data: {
+        status: status,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "FAILED",
+      message: "An error occurred while retrieving the transaction status.",
+      error: error.message,
     });
   }
 };
