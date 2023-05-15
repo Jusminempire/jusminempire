@@ -199,16 +199,19 @@ const filterUsers = async (req, res) => {
     throw new Error(error.message);
   }
 };
+
 const testingHook = async (req, res) => {
   try {
-    console.log(req.body);
+    // console.log(req.body);
     res.status(200).json({
       status: "SUCCESS",
+      data: req.body,
     });
   } catch (error) {
     throw new Error(error.message);
   }
 };
+
 module.exports = {
   filterUsers,
   allUsers,

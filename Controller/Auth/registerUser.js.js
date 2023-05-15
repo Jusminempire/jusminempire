@@ -8,8 +8,15 @@ const sendOTPVerificationEmail = require("./sendOTP");
 // Register Admin
 const registerUser = async (req, res) => {
   // collect the form details and destructure it
-  const { username, useremail, position, policy, userphonenumber, password } =
-    req.body;
+  const {
+    username,
+    useremail,
+    position,
+    policy,
+    userphonenumber,
+    password,
+    verified,
+  } = req.body;
 
   // check if any user in the database already use the email entered in
   const existingUser = await userSchema.findOne({
@@ -38,7 +45,7 @@ const registerUser = async (req, res) => {
       position,
       policy,
       password: hashPassword,
-      verified: false,
+      verified: verified ? true : false,
     });
 
     //   save the details to database but also send OTP to the user email

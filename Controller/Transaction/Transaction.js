@@ -97,6 +97,7 @@ const postTransaction = async (req, res) => {
       currency: "usd",
       payment_method_types: ["card"],
     });
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
@@ -111,9 +112,8 @@ const postTransaction = async (req, res) => {
       automatic_tax: { enabled: true },
     });
 
+    console.log(session);
     console.log(paymentIntent);
-    // console.log(session.payment_intent_data);
-
     const Transaction = new transactionSchema({
       deliveryaddress: deliveryaddress,
       product: productsWithTotal,
@@ -134,7 +134,7 @@ const postTransaction = async (req, res) => {
       status: "SUCCESS",
       data: {
         Transaction,
-        clientSecret: session.client_secret, // Use session.client_secret instead of paymentIntent.client_secret
+        paymentIntent: paymentIntent, // Use session.client_secret instead of paymentIntent.client_secret
         url: session.url,
       },
     });
@@ -308,6 +308,24 @@ const transactionStatus = async (req, res) => {
   }
 };
 
+// Retrieve transaction staus
+const getTransactionStatusInfo = async (req, res) => {
+  const { transactID } = req.body;
+
+  try {
+    if (transactID) {
+      const paymentIntent = await stripe.paymentIntents.retrieve(transactID);
+      const transactionStatus = paymentIntent.status;
+      // console.log(transactionStatus);
+      // transactionStatus will contain the status of the payment intent
+      return res.status(200).json({
+        status: transactionStatus,
+      });
+    }
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 // console.log(transactionSchema.filter((item) => item.status === "Processing"));
 module.exports = {
   postTransaction,
@@ -316,4 +334,5 @@ module.exports = {
   getSingleTransaction,
   transactionStatus,
   getTransactionStatus,
+  getTransactionStatusInfo,
 };
