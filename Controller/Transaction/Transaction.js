@@ -91,17 +91,28 @@ const postTransaction = async (req, res) => {
         quantity: 1,
       },
     ];
-
+    // Create a PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: totalAmount * 100, // Amount in cents
+      currency: "usd",
+      payment_method_types: ["card"],
+    });
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
       success_url: `${YOUR_DOMAIN}/orders`,
       cancel_url: `${YOUR_DOMAIN}`,
+      // payment_intent_data: {
+      //   // Associate the PaymentIntent with the Checkout Session
+      //   client_secret: paymentIntent.client_secret,
+      //   id: paymentIntent.id,
+      // },
       automatic_tax: { enabled: true },
     });
-   
-  
+
+    console.log(paymentIntent);
+    // console.log(session.payment_intent_data);
 
     const Transaction = new transactionSchema({
       deliveryaddress: deliveryaddress,
@@ -138,32 +149,16 @@ const postTransaction = async (req, res) => {
 };
 // transaction status
 const getTransactionStatus = async (req, res) => {
+  const { paymentIntentId } = req.body;
   try {
-    const { transactionId } = req.params; // Assuming you have the transaction ID
-
-    // Retrieve the transaction from your database based on the transaction ID
-    const transaction = await transactionSchema.findById(transactionId);
-
-    if (!transaction) {
-      return res.status(404).json({
-        status: "FAILED",
-        message: "Transaction not found.",
-      });
-    }
-
-    // Get the Stripe payment intent ID from the transaction object
-    const paymentIntentId = transaction.paymentIntentId;
-
-    // Retrieve the payment intent from Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-    // Get the status from the payment intent
-    const status = paymentIntent.status;
+    const transactionStatus = paymentIntent.status;
+    console.log(transactionStatus); // Output: Status of the transaction
 
     res.status(200).json({
       status: "SUCCESS",
       data: {
-        status: status,
+        status: transactionStatus,
       },
     });
   } catch (error) {
@@ -320,4 +315,5 @@ module.exports = {
   allTransaction,
   getSingleTransaction,
   transactionStatus,
+  getTransactionStatus,
 };

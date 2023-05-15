@@ -15,10 +15,12 @@ const {
   filterUsers,
   getSessionUser,
   getSingleUser,
+  testingHook,
 } = require("../Controller/Auth/usersCRUD.js");
 
 // user authentication route
 router.post("/registeruser", registerUser);
+router.post("/testinghook", testingHook);
 router.post("/verifyotp", verifyRegOTP);
 router.post("/resendotp", resendOTP);
 router.post("/loginuser", loginUser);
