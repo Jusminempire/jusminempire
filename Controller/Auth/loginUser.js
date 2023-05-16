@@ -19,7 +19,7 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         status: "FAILED",
-        message: "Email is not asigned to a valide user, Kindly register",
+        message: `${useremail} Email is not asigned to a valide user, Kindly register`,
       });
     }
     // if the email is not found or the password doesnt match return error
