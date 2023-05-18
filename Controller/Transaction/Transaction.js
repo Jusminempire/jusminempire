@@ -147,6 +147,7 @@ const postTransaction = async (req, res) => {
     });
   }
 };
+
 // transaction status
 const getTransactionStatus = async (req, res) => {
   const { paymentIntentId } = req.body;
@@ -259,17 +260,17 @@ const updateTransaction = async (req, res) => {
     }
 
     // find user with token
-    const allowAccess = await userSchema.findOne({
-      _id: verifyToken.id,
-    });
+    // const allowAccess = await userSchema.findOne({
+    //   _id: verifyToken.id,
+    // });
 
-    // condition user with access
-    if (allowAccess.verified != true) {
-      return res.status(401).json({
-        status: "ERROR",
-        message: "You are not authorized to perform this action",
-      });
-    }
+    // // condition user with access
+    // if (allowAccess.verified != true) {
+    //   return res.status(401).json({
+    //     status: "ERROR",
+    //     message: "You are not authorized to perform this action",
+    //   });
+    // }
 
     // update transaction
     const transaction = await transactionSchema.findOneAndUpdate(
