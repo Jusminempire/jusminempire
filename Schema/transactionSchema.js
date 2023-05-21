@@ -21,7 +21,7 @@ transactionSchemaFunc = mongoose.Schema({
     type: String,
     // required: true,
   },
-  paystackRef: {
+  orderRef: {
     type: String,
     // required: true,
   },
