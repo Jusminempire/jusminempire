@@ -154,7 +154,7 @@ const getTransactionStatus = async (req, res) => {
   try {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     const transactionStatus = paymentIntent.status;
-    console.log(transactionStatus); // Output: Status of the transaction
+    // console.log(transactionStatus); // Output: Status of the transaction
 
     res.status(200).json({
       status: "SUCCESS",
@@ -274,7 +274,7 @@ const updateTransaction = async (req, res) => {
 
     // update transaction
     const transaction = await transactionSchema.findOneAndUpdate(
-      { _id: req.params.id }, // specify the user to update
+      { _id: req.params.id }, // specify the transaction to update
       req.body,
       { new: true, runValidators: true }
     );
@@ -310,23 +310,23 @@ const transactionStatus = async (req, res) => {
 };
 
 // Retrieve transaction staus
-const getTransactionStatusInfo = async (req, res) => {
-  const { transactID } = req.body;
+// const getTransactionStatusInfo = async (req, res) => {
+//   const { transactID } = req.body;
 
-  try {
-    if (transactID) {
-      const paymentIntent = await stripe.paymentIntents.retrieve(transactID);
-      const transactionStatus = paymentIntent.status;
-      // console.log(transactionStatus);
-      // transactionStatus will contain the status of the payment intent
-      return res.status(200).json({
-        status: transactionStatus,
-      });
-    }
-  } catch (error) {
-    throw new Error(error);
-  }
-};
+//   try {
+//     if (transactID) {
+//       const paymentIntent = await stripe.paymentIntents.retrieve(transactID);
+//       const transactionStatus = paymentIntent.status;
+//       // console.log(transactionStatus);
+//       // transactionStatus will contain the status of the payment intent
+//       return res.status(200).json({
+//         status: transactionStatus,
+//       });
+//     }
+//   } catch (error) {
+//     throw new Error(error);
+//   }
+// };
 // console.log(transactionSchema.filter((item) => item.status === "Processing"));
 module.exports = {
   postTransaction,
@@ -335,5 +335,5 @@ module.exports = {
   getSingleTransaction,
   transactionStatus,
   getTransactionStatus,
-  getTransactionStatusInfo,
+  // getTransactionStatusInfo,
 };
