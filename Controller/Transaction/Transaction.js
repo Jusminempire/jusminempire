@@ -104,16 +104,11 @@ const postTransaction = async (req, res) => {
       mode: "payment",
       success_url: `${YOUR_DOMAIN}/orders`,
       cancel_url: `${YOUR_DOMAIN}`,
-      // payment_intent_data: {
-      //   // Associate the PaymentIntent with the Checkout Session
-      //   client_secret: paymentIntent.client_secret,
-      //   id: paymentIntent.id,
-      // },
       automatic_tax: { enabled: true },
     });
 
-    console.log(session);
-    console.log(paymentIntent);
+    // console.log(session);
+    // console.log(paymentIntent);
     const Transaction = new transactionSchema({
       deliveryaddress: deliveryaddress,
       product: productsWithTotal,
@@ -124,7 +119,8 @@ const postTransaction = async (req, res) => {
 
       // Add other transaction properties
     });
-
+    // console.log(session);
+    // console.log(paymentIntent);
     user.transaction.unshift(Transaction);
     await user.save();
     Transaction.user.unshift(user);
@@ -134,7 +130,7 @@ const postTransaction = async (req, res) => {
       status: "SUCCESS",
       data: {
         Transaction,
-        paymentIntent: paymentIntent, // Use session.client_secret instead of paymentIntent.client_secret
+        paymentIntent: session, // Use session.client_secret instead of paymentIntent.client_secret
         url: session.url,
       },
     });
@@ -149,17 +145,27 @@ const postTransaction = async (req, res) => {
 };
 
 // transaction status
-const getTransactionStatus = async (req, res) => {
-  const { paymentIntentId } = req.body;
-  try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    const transactionStatus = paymentIntent.status;
-    // console.log(transactionStatus); // Output: Status of the transaction
+// const sessionId =
+//   "cs_test_b14jxJNdrnhBYQAgm9Sd9aEs1R17S2sZbiN5fAZHko69Km5hFbMLPTeyUY";
 
+const getTransactionStatus = async (req, res) => {
+  const { paymentIntentI } = req.body;
+  // console.log(paymentIntentI);
+  try {
+    const session = await stripe.checkout.sessions.retrieve(paymentIntentI);
+    // if (session.payment_intent) {
+    const paymentIntentId = session.payment_intent;
+
+    // Retrieve the PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    // Retrieve the status of the PaymentIntent
+    const paymentStatus = paymentIntent.status;
+    // }
     res.status(200).json({
       status: "SUCCESS",
       data: {
-        status: transactionStatus,
+        status: paymentStatus,
       },
     });
   } catch (error) {
@@ -170,6 +176,28 @@ const getTransactionStatus = async (req, res) => {
     });
   }
 };
+// const getTransactionStatus = async (req, res) => {
+//   const { paymentIntentId } = req.body;
+//   console.log(paymentIntentId);
+//   try {
+//     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+//     const transactionStatus = paymentIntent.status;
+//     console.log(transactionStatus); // Output: Status of the transaction
+
+//     res.status(200).json({
+//       status: "SUCCESS",
+//       data: {
+//         status: transactionStatus,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       status: "FAILED",
+//       message: "An error occurred while retrieving the transaction status.",
+//       error: error.message,
+//     });
+//   }
+// };
 
 // FETCH ALL TRANSACTION
 const allTransaction = async (req, res) => {
