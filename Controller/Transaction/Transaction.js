@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const YOUR_DOMAIN = "http://localhost:3001";
+const YOUR_DOMAIN = "https://jusmin.vercel.app";
 const postTransaction = async (req, res) => {
   try {
     const {
