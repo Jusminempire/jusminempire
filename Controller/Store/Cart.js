@@ -2,8 +2,10 @@ const cartSchema = require("../../Schema/cartSchema");
 const jwt = require("jsonwebtoken");
 const userSchema = require("../../Schema/userSchema");
 
+
 // ADD TO CART
 const addToCart = async (req, res) => {
+  
   try {
     const {
       productID,
@@ -20,6 +22,7 @@ const addToCart = async (req, res) => {
 
     // check if the user has a successful token login
     const auth = req.headers.authorization;
+
     if (!auth || !auth.startsWith("Bearer ")) {
       return res.status(401).json({
         status: "FAILED",
