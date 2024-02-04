@@ -10,5 +10,5 @@ const connectAdminAccessDB = () => {
     .then(() => console.log("Database connection established"))
     .catch((error) => console.log(error));
 };
-
+// admin
 module.exports = connectAdminAccessDB;
